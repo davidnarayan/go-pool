@@ -48,12 +48,12 @@ func main() {
 
     // Add tasks to the pool using the worker function and the list of URLs
     for _, url := range urls {
-        pool.Add(worker, url)
+        mypool.Add(worker, url)
     }
 
     // Print out the results as they become available
     for {
-        if job, ok := pool.GetResult(); ok {
+        if job, ok := mypool.GetResult(); ok {
             if job.Error != nil {
                 fmt.Println("Error running job: ", job.Error)
             } else {
