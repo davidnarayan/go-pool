@@ -7,7 +7,9 @@ go-pool implements a basic worker pool for Go
 Installation
 ------------
 
-   go get github.com/davidnarayan/go-pool
+```
+go get github.com/davidnarayan/go-pool
+````
 
 
 Quick Start
