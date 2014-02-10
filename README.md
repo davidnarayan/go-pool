@@ -19,6 +19,9 @@ Quick Start
 package main
 
 import (
+    "fmt"
+    "net/http"
+
     "github.com/davidnarayan/go-pool"
 )
 
@@ -59,6 +62,9 @@ func main() {
             } else {
                 fmt.Println(job.Result)
             }
+        } else {
+            // No more results - exit loop!
+            break
         }
     }
 }
