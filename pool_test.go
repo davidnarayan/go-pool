@@ -21,31 +21,25 @@ func fetchURL(args ...interface{}) (interface{}, error) {
 
 func TestNewPool(t *testing.T) {
 	m := make(map[string]bool)
-	pool := New(2)
-	pool.Run()
+	pool := NewPool(2)
 
 	for _, url := range urls {
 		pool.Add(fetchURL, url)
 		m[url] = true
 	}
 
-	for {
-		if job, ok := pool.GetResult(); ok {
-			// log.Printf("%+v\n", job)
-			// Should have a result or an error for each url
-			url := job.Args[0]
+	for i := 0; i < len(urls); i++ {
+		job := pool.Result()
+		url := job.Args[0]
 
-			if _, ok := m[url.(string)]; ok {
-				if job.Result == nil && job.Error == nil {
-					t.Errorf("No result or error found for job for url %s",
-						url)
-				}
-			} else {
-				t.Errorf("No job found for url: %s", url)
+		if _, ok := m[url.(string)]; ok {
+			if job.Result == nil && job.Error == nil {
+				t.Errorf("No result or error found for job for url %s",
+					url)
 			}
-
 		} else {
-			break
+			t.Errorf("No job found for url: %s", url)
 		}
+
 	}
 }
