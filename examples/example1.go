@@ -58,6 +58,6 @@ func main() {
 			log.Println(job.Result)
 		}
 
-        logging.Info("Pool stats: %+v", mypool.Stats)
+		logging.Info("Pool stats: %+v", mypool.Stats)
 	}
 }
