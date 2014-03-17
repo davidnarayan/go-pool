@@ -7,6 +7,7 @@ package pool
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 //-----------------------------------------------------------------------------
@@ -28,6 +29,13 @@ type Pool struct {
 	out chan *Job
 
 	wg *sync.WaitGroup
+
+	Stats struct {
+		Submitted int64
+		Pending   int64
+		Running   int64
+		Completed int64
+	}
 }
 
 // NewPool creates a new pool with a fixed number of workers
@@ -55,6 +63,8 @@ func (p *Pool) Add(fn JobFunc, args ...interface{}) {
 			Args: args,
 		}
 
+		atomic.AddInt64(&p.Stats.Submitted, 1)
+		atomic.AddInt64(&p.Stats.Pending, 1)
 		p.in <- job
 	}()
 }
@@ -69,7 +79,11 @@ func (p *Pool) worker() {
 	defer p.wg.Done()
 	for {
 		job := <-p.in
+		atomic.AddInt64(&p.Stats.Pending, -1)
+		atomic.AddInt64(&p.Stats.Running, 1)
 		job.Result, job.Error = job.F(job.Args...)
+		atomic.AddInt64(&p.Stats.Running, -1)
+		atomic.AddInt64(&p.Stats.Completed, 1)
 		p.out <- job
 	}
 }
