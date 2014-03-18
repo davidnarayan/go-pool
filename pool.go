@@ -25,8 +25,8 @@ type Job struct {
 
 // Pool manages and distributes work to the workers
 type Pool struct {
-	in  chan *Job
-	out chan *Job
+	In  chan *Job
+	Out chan *Job
 
 	wg *sync.WaitGroup
 
@@ -43,8 +43,8 @@ func NewPool(size int) *Pool {
 	var wg sync.WaitGroup
 	p := &Pool{
 		wg:  &wg,
-		in:  make(chan *Job),
-		out: make(chan *Job),
+		In:  make(chan *Job),
+		Out: make(chan *Job),
 	}
 
 	for i := 0; i < size; i++ {
@@ -65,25 +65,24 @@ func (p *Pool) Add(fn JobFunc, args ...interface{}) {
 
 		atomic.AddInt64(&p.Stats.Submitted, 1)
 		atomic.AddInt64(&p.Stats.Pending, 1)
-		p.in <- job
+		p.In <- job
 	}()
 }
 
 // Return one result
 func (p *Pool) Result() *Job {
-	return <-p.out
+	return <-p.Out
 }
 
 // worker runs the next job available
 func (p *Pool) worker() {
 	defer p.wg.Done()
-	for {
-		job := <-p.in
+	for job := range p.In {
 		atomic.AddInt64(&p.Stats.Pending, -1)
 		atomic.AddInt64(&p.Stats.Running, 1)
 		job.Result, job.Error = job.F(job.Args...)
 		atomic.AddInt64(&p.Stats.Running, -1)
 		atomic.AddInt64(&p.Stats.Completed, 1)
-		p.out <- job
+		p.Out <- job
 	}
 }
