@@ -52,6 +52,11 @@ func NewPool(size int) *Pool {
 		go p.worker()
 	}
 
+	go func() {
+		p.wg.Wait()
+		close(p.Out)
+	}()
+
 	return p
 }
 
