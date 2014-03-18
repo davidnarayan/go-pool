@@ -6,6 +6,8 @@
 package pool
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -90,4 +92,12 @@ func (p *Pool) worker() {
 		atomic.AddInt64(&p.Stats.Completed, 1)
 		p.Out <- job
 	}
+}
+
+// String provides statistics about the pool and its jobs
+func (p *Pool) String() string {
+	s := fmt.Sprintf("%+v", p.Stats)
+	s = strings.Replace(s, ":", "=", -1)
+	s = strings.Trim(s, "{}")
+	return s
 }
