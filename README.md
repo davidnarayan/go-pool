@@ -42,30 +42,32 @@ func worker(args ...interface{}) (interface{}, error) {
     return resp, err
 }
 
+// Handle results from workers
+func handleResult(job *pool.Job) {
+    if job.Error != nil {
+        fmt.Println("Error running job: ", job.Error)
+    } else {
+        fmt.Println(job.Result)
+    }
+}
+
 func main() {
     // Create a new pool with 4 workers
-    mypool := pool.New(4)
+    mypool := pool.NewPool(4)
+    defer close(wp.In)
 
-    // Launch the workers
-    mypool.Run()
+    // Keep track of the number of jobs
+    var numJobs int
 
     // Add tasks to the pool using the worker function and the list of URLs
     for _, url := range urls {
-        mypool.Add(worker, url)
+        go mypool.Add(worker, url)
+        numJobs++
     }
 
     // Print out the results as they become available
-    for {
-        if job, ok := mypool.GetResult(); ok {
-            if job.Error != nil {
-                fmt.Println("Error running job: ", job.Error)
-            } else {
-                fmt.Println(job.Result)
-            }
-        } else {
-            // No more results - exit loop!
-            break
-        }
+    for i := 0; i < numJobs; i++ {
+        go handleResult(wp.Result())
     }
 }
 ```
