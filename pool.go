@@ -19,11 +19,15 @@ type JobFunc func(...interface{}) (interface{}, error)
 
 // Job holds everything required for a single unit of work
 type Job struct {
+	Id     string
 	F      JobFunc
 	Args   []interface{}
 	Result interface{}
 	Error  error
 }
+
+// IdFunc represents a user-defined function to assign Job IDs
+type IdFunc func() string
 
 // Pool manages and distributes work to the workers
 type Pool struct {
@@ -31,6 +35,8 @@ type Pool struct {
 	Out chan *Job
 
 	wg *sync.WaitGroup
+
+	nextId IdFunc
 
 	Stats struct {
 		Submitted int64
@@ -62,12 +68,21 @@ func NewPool(size int) *Pool {
 	return p
 }
 
+// SetIdFunc adds an id generator to the pool
+func (p *Pool) SetIdFunc(fn IdFunc) {
+	p.nextId = fn
+}
+
 // Add submits creates a new job for the pool
 func (p *Pool) Add(fn JobFunc, args ...interface{}) {
 	go func() {
 		job := &Job{
 			F:    fn,
 			Args: args,
+		}
+
+		if p.nextId != nil {
+			job.Id = p.nextId()
 		}
 
 		atomic.AddInt64(&p.Stats.Submitted, 1)

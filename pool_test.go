@@ -1,8 +1,11 @@
 package pool
 
 import (
+	"math/rand"
 	"net/http"
+	"strconv"
 	"testing"
+	"time"
 )
 
 var urls = []string{
@@ -41,5 +44,41 @@ func TestNewPool(t *testing.T) {
 			t.Errorf("No job found for url: %s", url)
 		}
 
+	}
+}
+
+func TestJobId(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+
+	nextId := func() string {
+		var n int
+
+		for {
+			n = rand.Intn(10)
+
+			if n > 0 {
+				break
+			}
+		}
+
+		return strconv.Itoa(n)
+	}
+
+	pool := NewPool(2)
+	pool.SetIdFunc(nextId)
+
+	for _, url := range urls {
+		pool.Add(fetchURL, url)
+	}
+
+	for i := 0; i < len(urls); i++ {
+		job := pool.Result()
+		id, err := strconv.Atoi(job.Id)
+		if err != nil {
+			t.Errorf("Unable to convert job id to integer: %s", err)
+		}
+		if id < 1 {
+			t.Errorf("Invalid Id found in Job: %s", job.Id)
+		}
 	}
 }
